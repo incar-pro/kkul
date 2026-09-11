@@ -552,12 +552,12 @@ function showResult(rows, title, isBulk, total) {
       ? (r.등록구분 === '재직' ? `<span class="badge-active">재직</span>` : `<span class="badge-exit">${r.등록구분}</span>`)
       : `<span class="badge-error">미매칭</span>`;
     html += `<tr class="${r.매칭?'':'unmatched'}">
+      <td>${badge}</td>
       <td>${r.이름}</td>
       <td class="emp-num">${r.사번}</td>
       <td>${r.소속}</td>
-      <td>${(r.생년월일 && r.생년월일 !== '//') ? r.생년월일 : ''}</td>
-      <td>${r.폰번호||''}</td>
-      <td>${badge}</td>
+      <td>${fmtBirth(r.생년월일)}</td>
+      <td>${fmtPhone(r.폰번호)}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -595,14 +595,27 @@ document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') doSearch();
 });
 
+function fmtBirth(v) {
+  if (!v || v === '//') return '';
+  // 2003/06/09 → 2003-06-09
+  return v.replace(/\//g, '-');
+}
+function fmtPhone(v) {
+  if (!v) return '';
+  const d = v.replace(/\D/g, '');
+  if (d.length === 11) return d.slice(0,3) + '-' + d.slice(3,7) + '-' + d.slice(7);
+  if (d.length === 10) return d.slice(0,3) + '-' + d.slice(3,6) + '-' + d.slice(6);
+  return v;
+}
+
 function makeHeader() {
   return `<table><thead><tr>
+    <th>상태</th>
     <th class="sortable" onclick="sortTable('이름')">이름 <span class="sort-icon" id="sort-이름"></span></th>
     <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
     <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
     <th class="sortable" onclick="sortTable('생년월일')">생년월일 <span class="sort-icon" id="sort-생년월일"></span></th>
     <th>폰번호</th>
-    <th>상태</th>
   </tr></thead>`;
 }
 
