@@ -541,12 +541,8 @@ function showResult(rows, title, isBulk, total) {
   window._sortKey = window._sortKey || '';
   window._sortAsc = window._sortAsc !== undefined ? window._sortAsc : true;
 
-  let html = `<table><thead><tr>
-    <th class="sortable" onclick="sortTable('이름')">이름 <span class="sort-icon" id="sort-이름"></span></th>
-    <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
-    <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
-    <th>생년월일</th><th>상태</th>
-  </tr></thead><tbody>`;
+  let html = makeHeader();
+  html += '<tbody>';
   rows.forEach(r => {
     if (r.type === 'sep') {
       html += `<tr class="separator-row"><td colspan="4">· · ·</td></tr>`;
@@ -571,12 +567,8 @@ function showResult(rows, title, isBulk, total) {
 function renderTable(rows) {
   const body = document.getElementById('resultBody');
   // 헤더 재사용
-  let html = `<table><thead><tr>
-    <th class="sortable" onclick="sortTable('이름')">이름 <span class="sort-icon" id="sort-이름"></span></th>
-    <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
-    <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
-    <th>생년월일</th><th>상태</th>
-  </tr></thead><tbody>`;
+  let html = makeHeader();
+  html += '<tbody>';
   rows.forEach(r => {
     if (r.type === 'sep') {
       html += `<tr class="separator-row"><td colspan="4">· · ·</td></tr>`;
@@ -601,6 +593,16 @@ function renderTable(rows) {
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') doSearch();
 });
+
+function makeHeader() {
+  return `<table><thead><tr>
+    <th class="sortable" onclick="sortTable('이름')">이름 <span class="sort-icon" id="sort-이름"></span></th>
+    <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
+    <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
+    <th class="sortable" onclick="sortTable('생년월일')">생년월일 <span class="sort-icon" id="sort-생년월일"></span></th>
+    <th>상태</th>
+  </tr></thead>`;
+}
 
 // ── 컬럼 정렬 ──
 window._lastRows = [];
