@@ -297,7 +297,7 @@
         <input type="checkbox" id="showAll" onchange="doSearch()">
         퇴사자 포함하여 검색
       </label>
-      <div class="hint">엔터키로도 검색 · 빈칸 검색 시 전체 목록</div>
+      <div class="hint">이름 · 사번 · 소속 · 폰번호로 검색 가능 · 엔터키로도 검색</div>
     </div>
 
     <div class="tab-panel" id="panel-excel">
@@ -444,7 +444,15 @@ function doSearch() {
   const showAll = document.getElementById('showAll').checked;
   let list = DB;
   if (!showAll) list = list.filter(d => d.등록구분 !== '퇴사');
-  if (q) list = list.filter(d => d.이름.includes(q) || d.사원번호.includes(q) || d.소속.includes(q) || (d.폰번호||'').replace(/\D/g,'').includes(q.replace(/\D/g,'')));
+  if (q) {
+    const qNum = q.replace(/\D/g,'');
+    list = list.filter(d =>
+      d.이름.includes(q) ||
+      d.사원번호.includes(q) ||
+      d.소속.includes(q) ||
+      (qNum.length >= 9 && (d.폰번호||'').replace(/\D/g,'') === qNum)
+    );
+  }
   list.sort((a,b) => {
     const sc = a.소속.localeCompare(b.소속,'ko');
     return sc !== 0 ? sc : a.이름.localeCompare(b.이름,'ko');
