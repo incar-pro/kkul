@@ -546,11 +546,11 @@ function showResult(rows, title, isBulk, total) {
     <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
     <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
     <th>생년월일</th><th>생년월일</th><th>상태</th>
-    <th>메모</th>
+    
   </tr></thead><tbody>`;
   rows.forEach(r => {
     if (r.type === 'sep') {
-      html += `<tr class="separator-row"><td colspan="5">· · ·</td></tr>`;
+      html += `<tr class="separator-row"><td colspan="4">· · ·</td></tr>`;
       return;
     }
     const badge = r.매칭
@@ -562,7 +562,6 @@ function showResult(rows, title, isBulk, total) {
       <td>${r.소속}</td>
       <td>${r.생년월일||''}</td>
       <td>${badge}</td>
-      <td class="memo-cell">${r.메모 || ''}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -578,11 +577,11 @@ function renderTable(rows) {
     <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
     <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
     <th>생년월일</th><th>생년월일</th><th>상태</th>
-    <th>메모</th>
+    
   </tr></thead><tbody>`;
   rows.forEach(r => {
     if (r.type === 'sep') {
-      html += `<tr class="separator-row"><td colspan="5">· · ·</td></tr>`;
+      html += `<tr class="separator-row"><td colspan="4">· · ·</td></tr>`;
       return;
     }
     const badge = r.매칭
@@ -594,7 +593,6 @@ function renderTable(rows) {
       <td>${r.소속}</td>
       <td>${r.생년월일||''}</td>
       <td>${badge}</td>
-      <td class="memo-cell">${r.메모 || ''}</td>
     </tr>`;
   });
   html += '</tbody></table>';
