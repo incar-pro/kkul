@@ -315,7 +315,10 @@
   <div class="result-section" id="resultSection">
     <div class="result-header">
       <span id="resultTitle">결과</span>
-      <span class="result-count" id="resultCount"></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="result-count" id="resultCount"></span>
+        <button onclick="downloadExcel()" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.5);color:white;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;">⬇️ 엑셀 저장</button>
+      </div>
     </div>
     <div class="result-table-wrap">
       <div id="resultBody"></div>
@@ -625,6 +628,39 @@ function makeHeader() {
     <th class="sortable" onclick="sortTable('생년월일')">생년월일 <span class="sort-icon" id="sort-생년월일"></span></th>
     <th>폰번호</th>
   </tr></thead>`;
+}
+
+function downloadExcel() {
+  const rows = window._lastRows || [];
+  const dataRows = rows.filter(r => r.type === 'data');
+  if (!dataRows.length) return;
+
+  const title = document.getElementById('resultTitle').textContent;
+  const ws_data = [['상태','이름','사원번호','소속','생년월일','폰번호','메모']];
+  dataRows.forEach(r => {
+    ws_data.push([
+      r.등록구분 || (r.매칭 ? '' : '미매칭'),
+      r.이름 || '',
+      r.사번 || '',
+      r.소속 || '',
+      (r.생년월일 && r.생년월일 !== '//') ? r.생년월일.replace(/\//g,'-') : '',
+      r.폰번호 ? r.폰번호.replace(/\D/g,'').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3') : '',
+      r.메모 || ''
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+  // 컬럼 너비 설정
+  ws['!cols'] = [
+    {wch:8},{wch:10},{wch:12},{wch:22},{wch:14},{wch:16},{wch:30}
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, '조회결과');
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `사원조회_${date}.xlsx`);
 }
 
 // ── 컬럼 정렬 ──
