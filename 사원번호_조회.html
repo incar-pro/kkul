@@ -444,7 +444,7 @@ function doSearch() {
   const showAll = document.getElementById('showAll').checked;
   let list = DB;
   if (!showAll) list = list.filter(d => d.등록구분 !== '퇴사');
-  if (q) list = list.filter(d => d.이름.includes(q) || d.사원번호.includes(q) || d.소속.includes(q));
+  if (q) list = list.filter(d => d.이름.includes(q) || d.사원번호.includes(q) || d.소속.includes(q) || (d.폰번호||'').replace(/\D/g,'').includes(q.replace(/\D/g,'')));
   list.sort((a,b) => {
     const sc = a.소속.localeCompare(b.소속,'ko');
     return sc !== 0 ? sc : a.이름.localeCompare(b.이름,'ko');
