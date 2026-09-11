@@ -449,7 +449,7 @@ function doSearch() {
     const sc = a.소속.localeCompare(b.소속,'ko');
     return sc !== 0 ? sc : a.이름.localeCompare(b.이름,'ko');
   });
-  showResult(list.map(d => ({type:'data', ...d, 사번: d.사원번호, 메모:'', 매칭:true})), q ? `"${q}" 검색 결과` : '전체 목록', false);
+  showResult(list.map(d => ({type:'data', ...d, 사번: d.사원번호, 생년월일: d.생년월일||'', 메모:'', 매칭:true})), q ? `"${q}" 검색 결과` : '전체 목록', false);
 }
 
 // 이름인지 사번인지 판별 (숫자 7자리 이상이면 사번)
@@ -507,16 +507,16 @@ function doBulk() {
       else if (found.length > 1) {
         // 동명이인: 여러 행으로
         found.forEach(f => {
-          rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 메모: memo + (found.length>1?' ⚠️동명이인':''), 매칭: true});
+          rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 메모: memo + (found.length>1?' ⚠️동명이인':''), 매칭: true});
         });
         return;
       }
     }
 
     if (info) {
-      rows.push({type:'data', 이름: 이름||info.이름, 사번: 사번||info.사원번호, 소속: info.소속, 등록구분: info.등록구분, 메모: memo, 매칭: true});
+      rows.push({type:'data', 이름: 이름||info.이름, 사번: 사번||info.사원번호, 소속: info.소속, 등록구분: info.등록구분, 생년월일: info.생년월일||'', 메모: memo, 매칭: true});
     } else {
-      rows.push({type:'data', 이름: 이름||(사번||'?'), 사번: 사번||'-', 소속:'-', 등록구분:'-', 메모: memo, 매칭: false});
+      rows.push({type:'data', 이름: 이름||(사번||'?'), 사번: 사번||'-', 소속:'-', 등록구분:'-', 생년월일:'', 메모: memo, 매칭: false});
     }
   });
 
@@ -555,7 +555,7 @@ function showResult(rows, title, isBulk, total) {
       <td>${r.이름}</td>
       <td class="emp-num">${r.사번}</td>
       <td>${r.소속}</td>
-      <td>${r.생년월일||''}</td>
+      <td>${(r.생년월일 && r.생년월일 !== '//') ? r.생년월일 : ''}</td>
       <td>${badge}</td>
     </tr>`;
   });
@@ -581,7 +581,7 @@ function renderTable(rows) {
       <td>${r.이름}</td>
       <td class="emp-num">${r.사번}</td>
       <td>${r.소속}</td>
-      <td>${r.생년월일||''}</td>
+      <td>${(r.생년월일 && r.생년월일 !== '//') ? r.생년월일 : ''}</td>
       <td>${badge}</td>
     </tr>`;
   });
