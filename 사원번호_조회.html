@@ -530,9 +530,12 @@ function doBulk() {
       if (found.length === 1) info = found[0];
     }
 
-    // 사번 없거나 미매칭 → 이름으로 DB 검색
+    // 사번 없거나 미매칭 → 이름으로 DB 검색 (초성 포함)
     if (!info && 이름) {
-      const found = DB.filter(d => d.이름 === 이름);
+      // 정확히 일치 먼저
+      let found = DB.filter(d => d.이름 === 이름);
+      // 없으면 초성 검색
+      if (found.length === 0) found = DB.filter(d => matchChosung(d.이름, 이름));
       if (found.length === 1) info = found[0];
       else if (found.length > 1) {
         // 동명이인: 여러 행으로
