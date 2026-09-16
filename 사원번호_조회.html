@@ -471,6 +471,7 @@ function doSearch() {
 function isSabun(str) { return /^\d{6,8}$/.test(str); } // 사번은 6~8자리, 폰번호(10~11자리)는 제외
 
 function parseLine(trimmed) {
+  trimmed = trimmed.replace(/^[-•*·]\s*/, '').trim();
   const parts = trimmed.split(/\s+/);
   if (parts.length === 0) return null;
 
@@ -630,12 +631,14 @@ function fmtPhone(v) {
 
 function makeHeader() {
   return `<table><thead><tr>
+    <th class="sortable" onclick="sortTable('담당자')">담당자 <span class="sort-icon" id="sort-담당자"></span></th>
     <th>상태</th>
     <th class="sortable" onclick="sortTable('이름')">이름 <span class="sort-icon" id="sort-이름"></span></th>
     <th class="sortable" onclick="sortTable('사번')">사원번호 <span class="sort-icon" id="sort-사번"></span></th>
     <th class="sortable" onclick="sortTable('소속')">소속 <span class="sort-icon" id="sort-소속"></span></th>
     <th class="sortable" onclick="sortTable('생년월일')">생년월일 <span class="sort-icon" id="sort-생년월일"></span></th>
     <th>폰번호</th>
+    <th>메모</th>
   </tr></thead>`;
 }
 
