@@ -274,15 +274,17 @@
   <div class="card">
     <div class="tab-panel active" id="panel-bulk">
       <div class="bulk-wrap">
-        <textarea id="bulkInput" placeholder="이름과 사번을 붙여넣으세요.
+        <textarea id="bulkInput" placeholder="이름, 사번, 폰번호 중 하나만 있어도 돼요.
 빈 줄로 그룹을 구분할 수 있어요.
 
 예시)
-강민지	2639719 미가입
-강석호	2639898 증액
-김은혜	2542770 증액 > 소액초과자나 리스크대상"></textarea>
+강민지 2438934
+01092692568
+ㅅㅎㅇ
+- 주우열 2638188 위촉계약서 미제출"></textarea>
         <div class="bulk-hint">
-          · 이름/사번 순서 상관없이 입력 가능 &nbsp;·&nbsp; 이름만 또는 사번만 입력해도 돼요<br>
+          · 이름 · 사번 · 폰번호 · 초성(ㅅㅎㅇ) 모두 검색 가능<br>
+          · 순서 상관없이 입력 · 앞에 - 붙여도 인식해요<br>
           · 빈 줄은 구분선으로 표시
         </div>
         <button class="btn btn-full" onclick="doBulk()">조회하기</button>
