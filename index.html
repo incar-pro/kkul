@@ -454,7 +454,9 @@ function doSearch() {
       d.이름.includes(q) ||
       d.사원번호.includes(q) ||
       d.소속.includes(q) ||
-      (qNum.length >= 9 && (d.폰번호||'').replace(/\D/g,'') === qNum)
+      (qNum.length >= 9 && (d.폰번호||'').replace(/\D/g,'') === qNum) ||
+      matchChosung(d.이름, q) ||
+      matchChosung(d.소속, q)
     );
   }
   list.sort((a,b) => {
@@ -662,6 +664,23 @@ function downloadExcel() {
   const now = new Date();
   const date = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   XLSX.writeFile(wb, `사원조회_${date}.xlsx`);
+}
+
+
+// ── 초성 검색 ──
+const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function getChosung(str) {
+  return str.split('').map(ch => {
+    const code = ch.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) return ch;
+    return CHOSUNG[Math.floor(code / 588)];
+  }).join('');
+}
+function matchChosung(target, query) {
+  // query가 전부 초성인지 확인
+  const isAllChosung = [...query].every(c => CHOSUNG.includes(c));
+  if (!isAllChosung) return false;
+  return getChosung(target).includes(query);
 }
 
 // ── 컬럼 정렬 ──
