@@ -470,34 +470,41 @@ function doSearch() {
 // 이름인지 사번인지 판별 (숫자 7자리 이상이면 사번)
 function isSabun(str) { return /^\d{6,8}$/.test(str); } // 사번은 6~8자리, 폰번호(10~11자리)는 제외
 
+function isPhone(str) { return /^0\d{9,10}$/.test(str.replace(/[-\s]/g,'')); }
+
 function parseLine(trimmed) {
   trimmed = trimmed.replace(/^[-•*·]\s*/, '').trim();
   const parts = trimmed.split(/\s+/);
   if (parts.length === 0) return null;
 
-  let 이름 = '', 사번 = '', memo = '';
+  let 이름 = '', 사번 = '', phone = '', memo = '';
+
+  // 폰번호 토큰 찾기
+  const phoneIdx = parts.findIndex(p => isPhone(p));
+  if (phoneIdx !== -1) {
+    phone = parts[phoneIdx].replace(/[-\s]/g,'');
+    const rest = parts.filter((_,i) => i !== phoneIdx);
+    이름 = rest[0] || '';
+    memo = rest.slice(1).join(' ');
+    return { 이름, 사번, phone, memo };
+  }
 
   if (parts.length === 1) {
-    // 이름만 or 사번만
     if (isSabun(parts[0])) { 사번 = parts[0]; }
     else { 이름 = parts[0]; }
   } else {
-    // 첫 토큰이 사번이면 → 사번 이름 순서
     if (isSabun(parts[0])) {
       사번 = parts[0];
       이름 = parts[1];
       memo = parts.slice(2).join(' ');
     } else {
-      // 이름 사번 순서 (기존)
       이름 = parts[0];
       사번 = parts[1];
-      // 사번이 사번처럼 안 생겼으면 두 번째도 이름일 수 있으나,
-      // 일단 두 번째가 숫자면 사번, 아니면 사번 없이 이름만 처리
       if (!isSabun(사번)) { 이름 = trimmed; 사번 = ''; memo = ''; }
       else { memo = parts.slice(2).join(' '); }
     }
   }
-  return { 이름, 사번, memo };
+  return { 이름, 사번, phone, memo };
 }
 
 function doBulk() {
@@ -512,9 +519,16 @@ function doBulk() {
     const parsed = parseLine(trimmed);
     if (!parsed) return;
     const { 이름, 사번, memo } = parsed;
+    const phone = parsed.phone || '';
 
     // 사번으로 먼저 매칭
     let info = 사번 ? DB_MAP[사번] : null;
+
+    // 폰번호로 매칭
+    if (!info && phone) {
+      const found = DB.filter(d => (d.폰번호||'').replace(/\D/g,'') === phone);
+      if (found.length === 1) info = found[0];
+    }
 
     // 사번 없거나 미매칭 → 이름으로 DB 검색
     if (!info && 이름) {
