@@ -567,12 +567,14 @@ function showResult(rows, title, isBulk, total) {
       ? (r.등록구분 === '재직' ? `<span class="badge-active">재직</span>` : `<span class="badge-exit">${r.등록구분}</span>`)
       : `<span class="badge-error">미매칭</span>`;
     html += `<tr class="${r.매칭?'':'unmatched'}">
+            <td>${MANAGER_MAP[r.소속]||''}</td>
       <td>${badge}</td>
       <td>${r.이름}</td>
       <td class="emp-num">${r.사번}</td>
       <td>${r.소속}</td>
       <td>${fmtBirth(r.생년월일)}</td>
       <td>${fmtPhone(r.폰번호)}</td>
+      <td class="memo-cell">${r.메모||''}</td>
     </tr>`;
   });
   html += '</tbody></table>';
