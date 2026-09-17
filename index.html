@@ -533,17 +533,27 @@ function doBulk() {
 
     // 사번 없거나 미매칭 → 이름으로 DB 검색 (초성 포함)
     if (!info && 이름) {
-      // 정확히 일치 먼저
+      // 1. 이름 완전 일치
       let found = DB.filter(d => d.이름 === 이름);
-      // 없으면 초성 검색
-      if (found.length === 0) found = DB.filter(d => matchChosung(d.이름, 이름));
-      if (found.length === 1) info = found[0];
-      else if (found.length > 1) {
-        // 동명이인: 여러 행으로
+      if (found.length === 1) {
+        info = found[0];
+      } else if (found.length > 1) {
+        // 완전일치 동명이인 → ⚠️동명이인 표시
         found.forEach(f => {
-          rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo + (found.length>1?' ⚠️동명이인':''), 매칭: true});
+          rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo + ' ⚠️동명이인', 매칭: true});
         });
         return;
+      } else {
+        // 2. 초성 검색 → 동명이인 표시 없이 각각 나열
+        found = DB.filter(d => matchChosung(d.이름, 이름));
+        if (found.length === 1) {
+          info = found[0];
+        } else if (found.length > 1) {
+          found.forEach(f => {
+            rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo, 매칭: true});
+          });
+          return;
+        }
       }
     }
 
