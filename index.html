@@ -494,7 +494,7 @@ function doSearch() {
       d.이름.includes(q) ||
       d.사원번호.includes(q) ||
       d.소속.includes(q) ||
-      (qNum.length >= 9 && (d.폰번호||'').replace(/\D/g,'') === qNum) ||
+      (qNum.length >= 4 && (d.폰번호||'').replace(/\D/g,'').includes(qNum)) ||
       matchChosung(d.이름, q) ||
       matchChosung(d.소속, q)
     );
