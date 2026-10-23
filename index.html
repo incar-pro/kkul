@@ -1187,12 +1187,14 @@ function renderNode(name, node, depth) {
   return html;
 }
 
-function togAc(id, header) {
+function togAc(id, headerEl) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.toggle('open');
-  const arrow = header.querySelector('.ac-arrow');
-  if (arrow) arrow.style.transform = el.classList.contains('open') ? 'rotate(90deg)' : '';
+  const isOpen = el.classList.contains('open');
+  // 직계 자식 arrow만 찾기 (중첩 방지)
+  const arrows = headerEl.querySelectorAll('.ac-arrow');
+  if (arrows.length) arrows[arrows.length-1].style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
 }
 
 function orgExpandAll(expand) {
