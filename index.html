@@ -607,6 +607,10 @@ function isSabun(str) { return /^\d{6,8}$/.test(str); } // 사번은 6~8자리, 
 
 function isPhone(str) { return /^0\d{9,10}$/.test(str.replace(/[-\s]/g,'')); }
 
+function isChosung(str) {
+  return str.length > 0 && [...str].every(c => 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.includes(c));
+}
+
 function parseLine(trimmed) {
   trimmed = trimmed.replace(/^[-•*·]\s*/, '').trim();
   const parts = trimmed.split(/\s+/);
@@ -667,24 +671,26 @@ function doBulk() {
 
     // 사번 없거나 미매칭 → 이름으로 DB 검색 (초성 포함)
     if (!info && 이름) {
-      // 1. 이름 완전 일치
-      let found = DB.filter(d => d.이름 === 이름);
-      if (found.length === 1) {
-        info = found[0];
-      } else if (found.length > 1) {
-        // 완전일치 동명이인 → ⚠️동명이인 표시
-        found.forEach(f => {
-          rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo + ' ⚠️동명이인', 매칭: true});
-        });
-        return;
-      } else {
-        // 2. 초성 검색 → 동명이인 표시 없이 각각 나열
-        found = DB.filter(d => matchChosung(d.이름, 이름));
+      // 입력이 초성이면 바로 초성 검색
+      if (isChosung(이름)) {
+        const found = DB.filter(d => matchChosung(d.이름, 이름));
         if (found.length === 1) {
           info = found[0];
         } else if (found.length > 1) {
           found.forEach(f => {
             rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo, 매칭: true});
+          });
+          return;
+        }
+      } else {
+        // 1. 이름 완전 일치
+        let found = DB.filter(d => d.이름 === 이름);
+        if (found.length === 1) {
+          info = found[0];
+        } else if (found.length > 1) {
+          // 완전일치 동명이인 → ⚠️동명이인 표시
+          found.forEach(f => {
+            rows.push({type:'data', 이름: f.이름, 사번: f.사원번호, 소속: f.소속, 등록구분: f.등록구분, 생년월일: f.생년월일||'', 폰번호: f.폰번호||'', 메모: memo + ' ⚠️동명이인', 매칭: true});
           });
           return;
         }
