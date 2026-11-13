@@ -1169,10 +1169,11 @@ function countNode(node) {
   return node._m.length + Object.values(node._c).reduce((s,c) => s + countNode(c), 0);
 }
 
-const RANK_TIERS = [['총괄대표'],['사업단장'],['이사','영업이사'],['본부장'],['부본부장'],['수석지점장','Senior.지점장'],['지점장','영업지점장'],['부지점장'],['수석팀장'],['팀장','영업팀장'],['사원','ProFA','Premier'],['Rookie','루키','Newstar','뉴스타']];
+const RANK_TIERS = [['총괄대표'],['사업단장'],['이사','영업이사'],['본부장'],['부본부장'],['수석지점장','Senior.지점장'],['지점장','영업지점장'],['부지점장'],['수석팀장'],['Rookie','루키','Newstar','뉴스타']];
+const RANK_BASE = ['팀장','영업팀장','사원','ProFA','Premier'].map(s => s.toLowerCase());
 const RANK_MAP = {};
 RANK_TIERS.forEach((t, i) => t.forEach(n => { RANK_MAP[n.toLowerCase()] = i; }));
-function rankIdx(j) { if (!j) return 999; const v = RANK_MAP[String(j).toLowerCase()]; return v === undefined ? 500 : v; }
+function rankIdx(j) { if (!j) return 999; const k = String(j).toLowerCase(); if (RANK_BASE.indexOf(k) >= 0) return 999; const v = RANK_MAP[k]; return v === undefined ? 500 : v; }
 function memberRows(members, indent) {
   if (!members.length) return '';
   let h = `<div class="org-member-row" style="padding-left:${indent+16}px;background:#f0f0ff;font-weight:700;color:#3949ab;font-size:11px;">
