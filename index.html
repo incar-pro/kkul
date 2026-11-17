@@ -529,11 +529,7 @@
         <input type="text" id="searchInput" placeholder="이름 또는 사원번호 입력" autocomplete="off">
         <button class="btn" onclick="doSearch()">검색</button>
       </div>
-      <label class="toggle-wrap">
-        <input type="checkbox" id="showAll" onchange="doSearch()">
-        퇴사자 포함하여 검색
-      </label>
-      <div class="hint">이름 · 사번 · 소속 · 폰번호로 검색 가능 · 엔터키로도 검색</div>
+      <div class="hint">이름 · 사번 · 소속 · 폰번호 · 초성 검색 · 퇴사자도 함께 나와요 · 영어 자판으로 쳐도 찾아줘요</div>
     </div>
 
     <div class="tab-panel" id="panel-excel">
@@ -730,26 +726,78 @@ function handleExcelFile(file) {
   handleExcel(input);
 }
 
+const E2K = {r:'ㄱ',R:'ㄲ',s:'ㄴ',e:'ㄷ',E:'ㄸ',f:'ㄹ',a:'ㅁ',q:'ㅂ',Q:'ㅃ',t:'ㅅ',T:'ㅆ',d:'ㅇ',w:'ㅈ',W:'ㅉ',c:'ㅊ',z:'ㅋ',x:'ㅌ',v:'ㅍ',g:'ㅎ',k:'ㅏ',o:'ㅐ',O:'ㅒ',i:'ㅑ',j:'ㅓ',p:'ㅔ',P:'ㅖ',u:'ㅕ',h:'ㅗ',y:'ㅛ',n:'ㅜ',b:'ㅠ',m:'ㅡ',l:'ㅣ'};
+const H_CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const H_JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const H_JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const H_VCOMB = {'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ'};
+const H_FCOMB = {'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ'};
+const H_FSPLIT = {}; for (const k in H_FCOMB) H_FSPLIT[H_FCOMB[k]] = [k[0], k[1]];
+function engToKor(s) {
+  let out = '', cho = -1, jung = -1, jong = 0;
+  const flush = () => {
+    if (cho >= 0 && jung >= 0) out += String.fromCharCode(0xAC00 + (cho * 21 + jung) * 28 + jong);
+    else if (cho >= 0) out += H_CHO[cho];
+    else if (jung >= 0) out += H_JUNG[jung];
+    cho = -1; jung = -1; jong = 0;
+  };
+  for (const ch of s) {
+    const m = E2K[ch] || E2K[ch.toLowerCase()];
+    if (!m) { flush(); out += ch; continue; }
+    if (H_JUNG.includes(m)) {
+      if (cho >= 0 && jung < 0) { jung = H_JUNG.indexOf(m); }
+      else if (cho >= 0 && jung >= 0 && jong === 0) {
+        const cm = H_VCOMB[H_JUNG[jung] + m];
+        if (cm) jung = H_JUNG.indexOf(cm); else { flush(); out += m; }
+      } else if (cho >= 0 && jung >= 0 && jong > 0) {
+        const jc = H_JONG[jong], sp = H_FSPLIT[jc]; let nc;
+        if (sp) { jong = H_JONG.indexOf(sp[0]); nc = H_CHO.indexOf(sp[1]); } else { jong = 0; nc = H_CHO.indexOf(jc); }
+        flush(); cho = nc; jung = H_JUNG.indexOf(m);
+      } else { flush(); out += m; }
+    } else {
+      if (cho < 0) cho = H_CHO.indexOf(m);
+      else if (jung < 0) { flush(); cho = H_CHO.indexOf(m); }
+      else if (jong === 0) { const ji = H_JONG.indexOf(m); if (ji > 0) jong = ji; else { flush(); cho = H_CHO.indexOf(m); } }
+      else { const cm = H_FCOMB[H_JONG[jong] + m]; if (cm) jong = H_JONG.indexOf(cm); else { flush(); cho = H_CHO.indexOf(m); } }
+    }
+  }
+  flush();
+  return out;
+}
+function latinToHangul(q) {
+  if (!/^[A-Za-z ]{2,}$/.test(q)) return '';
+  const k = engToKor(q);
+  return (/[가-힣]/.test(k) && k !== q) ? k : '';
+}
+
+function matchQ(d, q) {
+  const qNum = q.replace(/\D/g, '');
+  return d.이름.includes(q) || d.사원번호.includes(q) || d.소속.includes(q) ||
+    (qNum.length >= 4 && (d.폰번호 || '').replace(/\D/g, '').includes(qNum)) || matchChosung(d.이름, q);
+}
 function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
-  const showAll = document.getElementById('showAll').checked;
-  let list = DB;
-  if (!showAll) list = list.filter(d => d.등록구분 !== '퇴사');
+  let list = DB, hint = '', hq = q;
   if (q) {
-    const qNum = q.replace(/\D/g,'');
-    list = list.filter(d =>
-      d.이름.includes(q) ||
-      d.사원번호.includes(q) ||
-      d.소속.includes(q) ||
-      (qNum.length >= 4 && (d.폰번호||'').replace(/\D/g,'').includes(qNum)) ||
-      matchChosung(d.이름, q)
-    );
+    list = DB.filter(d => matchQ(d, q));
+    const conv = latinToHangul(q);
+    if (conv) {
+      const have = new Set(list.map(d => d.사원번호));
+      const more = DB.filter(d => !have.has(d.사원번호) && matchQ(d, conv));
+      if (more.length) {
+        if (!list.length) hq = conv;
+        list = list.concat(more);
+        hint = '<div style="margin:12px 16px;padding:10px 14px;border:1.5px solid #f48fb1;border-radius:10px;background:#fff;color:#ad1457;font-size:13px;">💡 혹시 <b>' + conv + '</b> 이거 찾으셨어요? 영어 자판으로 입력된 것 같아서 한글로 바꿔서 같이 찾았어요.</div>';
+      }
+    }
   }
-  list.sort((a,b) => {
-    const sc = a.소속.localeCompare(b.소속,'ko');
-    return sc !== 0 ? sc : a.이름.localeCompare(b.이름,'ko');
+  list = list.slice().sort((a, b) => {
+    const ra = a.등록구분 === '재직' ? 0 : 1, rb = b.등록구분 === '재직' ? 0 : 1;
+    if (ra !== rb) return ra - rb;
+    const sc = a.소속.localeCompare(b.소속, 'ko');
+    return sc !== 0 ? sc : a.이름.localeCompare(b.이름, 'ko');
   });
-  showResult(list.map(d => ({type:'data', ...d, 사번: d.사원번호, 생년월일: d.생년월일||'', 직급: d.직급||'', 폰번호: d.폰번호||'', 메모:'', 매칭:true})), q ? `"${q}" 검색 결과` : '전체 목록', false, undefined, q);
+  showResult(list.map(d => ({type:'data', ...d, 사번: d.사원번호, 생년월일: d.생년월일||'', 직급: d.직급||'', 폰번호: d.폰번호||'', 메모:'', 매칭:true})), q ? `"${q}" 검색 결과` : '전체 목록', false, undefined, hq, hint);
 }
 
 // 이름인지 사번인지 판별 (숫자 7자리 이상이면 사번)
@@ -807,7 +855,7 @@ function doBulk() {
 
     const parsed = parseLine(trimmed);
     if (!parsed) return;
-    const { 이름, 사번, memo } = parsed;
+    let { 이름, 사번, memo } = parsed;
     const phone = parsed.phone || '';
 
     // 사번으로 먼저 매칭
@@ -819,6 +867,10 @@ function doBulk() {
       if (found.length === 1) info = found[0];
     }
 
+    if (!info && 이름 && !isChosung(이름) && !DB.some(d => d.이름 === 이름)) {
+      const conv = latinToHangul(이름);
+      if (conv && DB.some(d => d.이름 === conv)) { memo = (memo ? memo + ' ' : '') + '💡 "' + 이름 + '" → 혹시 ' + conv + '?'; 이름 = conv; }
+    }
     // 사번 없거나 미매칭 → 이름으로 DB 검색 (초성 포함)
     if (!info && 이름) {
       // 입력이 초성이면 바로 초성 검색
@@ -858,7 +910,8 @@ function doBulk() {
   showResult(rows, '일괄 조회 결과', true, total);
 }
 
-function showResult(rows, title, isBulk, total, q='') {
+function showResult(rows, title, isBulk, total, q='', hint='') {
+  window._hintHtml = hint;
   window._lastRows = rows;
   window._sortKey = '';
   window._sortAsc = true;
@@ -898,7 +951,7 @@ function showResult(rows, title, isBulk, total, q='') {
     </tr>`;
   });
   html += '</tbody></table>';
-  body.innerHTML = html;
+  body.innerHTML = (window._hintHtml || '') + html;
   updateSortIcons();
 }
 
@@ -928,7 +981,7 @@ function renderTable(rows) {
     </tr>`;
   });
   html += '</tbody></table>';
-  body.innerHTML = html;
+  body.innerHTML = (window._hintHtml || '') + html;
   updateSortIcons();
 }
 
