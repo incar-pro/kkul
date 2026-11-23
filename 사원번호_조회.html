@@ -560,6 +560,7 @@
         <input id="org-search" oninput="renderOrg()" placeholder="🔍 이름·소속 필터" style="border:2px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:13px;outline:none;background:#fff9fb;color:#3a1a2e;min-width:130px;">
         <button onclick="orgExpandAll(true)" style="background:#fce4ec;color:#ad1457;border:1px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">▼ 전체 펼치기</button>
         <button onclick="orgExpandAll(false)" style="background:#f5f5f5;color:#888;border:1px solid #e0e0e0;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">▶ 전체 접기</button>
+        <button onclick="orgExcel()" style="background:#fff;color:#ad1457;border:1.5px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">⬇️ 엑셀 저장</button>
       </div>
       <div id="org-body"></div>
     </div>
@@ -1401,6 +1402,35 @@ function openLightbox(src){
   const img = ov.querySelector('#lb-img');
   img.dataset.big = '0'; img.style.maxWidth = '96vw'; img.style.maxHeight = '92vh'; img.style.cursor = 'zoom-in';
   img.src = src; ov.style.display = 'flex'; ov.scrollTop = 0; ov.scrollLeft = 0;
+}
+
+function orgExcel() {
+  const list = getOrgList();
+  if (!list.length) { alert('저장할 조직도 데이터가 없어요'); return; }
+  const tree = buildTree(list);
+  const sortM = (a, b) => (rankIdx(a.j) - rankIdx(b.j)) || a.n.localeCompare(b.n, 'ko');
+  const treeRows = [['조직 / 이름', '직급', '사원번호', '생년월일', '폰번호', '상태', '인원']];
+  const flatRows = [['소속(전체 경로)', '소속', '담당자', '직급', '이름', '사원번호', '생년월일', '폰번호', '상태']];
+  function walk(name, node, depth, path) {
+    const p = path.concat(name);
+    treeRows.push(['　'.repeat(depth) + '■ ' + name, '', '', '', '', '', countNode(node) + '명']);
+    Object.keys(node._c).sort().forEach(k => walk(k, node._c[k], depth + 1, p));
+    node._m.slice().sort(sortM).forEach(m => {
+      const ph = DB_MAP[m.i], phone = ph ? fmtPhone(ph.폰번호 || '') : '';
+      treeRows.push(['　'.repeat(depth + 1) + m.n, m.j || '', m.i, fmtBirth(m.b), phone, m.r, '']);
+      flatRows.push([p.join(' > '), name, MANAGER_MAP[name] || '', m.j || '', m.n, m.i, fmtBirth(m.b), phone, m.r]);
+    });
+  }
+  Object.keys(tree._c).sort().forEach(k => walk(k, tree._c[k], 0, []));
+  const wb = XLSX.utils.book_new();
+  const w1 = XLSX.utils.aoa_to_sheet(treeRows);
+  w1['!cols'] = [{wch:38},{wch:10},{wch:11},{wch:12},{wch:14},{wch:6},{wch:8}];
+  const w2 = XLSX.utils.aoa_to_sheet(flatRows);
+  w2['!cols'] = [{wch:50},{wch:22},{wch:8},{wch:10},{wch:10},{wch:11},{wch:12},{wch:14},{wch:6}];
+  XLSX.utils.book_append_sheet(wb, w1, '조직도');
+  XLSX.utils.book_append_sheet(wb, w2, '명단');
+  const n = new Date();
+  XLSX.writeFile(wb, '조직도_' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.xlsx');
 }
 </script>
 </body>
