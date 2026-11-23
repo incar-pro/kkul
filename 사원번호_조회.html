@@ -561,6 +561,7 @@
         <button onclick="orgExpandAll(true)" style="background:#fce4ec;color:#ad1457;border:1px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">▼ 전체 펼치기</button>
         <button onclick="orgExpandAll(false)" style="background:#f5f5f5;color:#888;border:1px solid #e0e0e0;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">▶ 전체 접기</button>
         <button onclick="orgExcel()" style="background:#fff;color:#ad1457;border:1.5px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">⬇️ 엑셀 저장</button>
+        <button onclick="orgPdf()" style="background:#fff;color:#ad1457;border:1.5px solid #f48fb1;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;">📄 PDF 저장</button>
       </div>
       <div id="org-body"></div>
     </div>
@@ -1431,6 +1432,58 @@ function orgExcel() {
   XLSX.utils.book_append_sheet(wb, w2, '명단');
   const n = new Date();
   XLSX.writeFile(wb, '조직도_' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.xlsx');
+}
+
+function buildOrgPrintHtml(list) {
+  const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+  const showAll = document.getElementById('org-status').value === 'all';
+  const q = (document.getElementById('org-search').value || '').trim();
+  const sortM = (a, b) => (rankIdx(a.j) - rankIdx(b.j)) || a.n.localeCompare(b.n, 'ko');
+  const tree = buildTree(list);
+  let body = '', first = true;
+  function members(ms, depth) {
+    let t = '<table class="' + (showAll ? 't6' : 't5') + '" style="margin-left:' + ((depth + 1) * 14) + 'px;width:calc(100% - ' + ((depth + 1) * 14) + 'px)"><thead><tr><th>이름</th><th>직급</th><th>사원번호</th><th>생년월일</th><th>폰번호</th>' + (showAll ? '<th>상태</th>' : '') + '</tr></thead><tbody>';
+    ms.slice().sort(sortM).forEach(m => {
+      const ph = DB_MAP[m.i];
+      t += '<tr><td class="n">' + esc(m.n) + '</td><td class="j">' + esc(m.j || '') + '</td><td>' + esc(m.i) + '</td><td>' + esc(fmtBirth(m.b)) + '</td><td>' + esc(ph ? fmtPhone(ph.폰번호 || '') : '') + '</td>' + (showAll ? '<td>' + esc(m.r) + '</td>' : '') + '</tr>';
+    });
+    return t + '</tbody></table>';
+  }
+  function walk(name, node, depth) {
+    const pb = depth === 2 && !first ? ' pb' : '';
+    if (depth === 2) first = false;
+    body += '<div class="nd d' + Math.min(depth, 4) + pb + '" style="margin-left:' + (depth * 14) + 'px"><span>' + esc(name) + '</span><span class="ct">' + countNode(node) + '명</span></div>';
+    Object.keys(node._c).sort().forEach(k => walk(k, node._c[k], depth + 1));
+    if (node._m.length) body += members(node._m, depth);
+  }
+  Object.keys(tree._c).sort().forEach(k => walk(k, tree._c[k], 0));
+  const d = new Date(), ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const sub = ds + ' · ' + (showAll ? '전체(퇴사 포함)' : '재직자만') + (q ? ' · 검색 "' + esc(q) + '"' : '') + ' · ' + list.length + '명';
+  const css = '@page{size:A4;margin:12mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + 'body{font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:10px;color:#222;margin:0}'
+    + 'h1{font-size:18px;margin:0 0 2px;color:#3949ab}.sub{font-size:11px;color:#777;margin-bottom:10px}'
+    + '.nd{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;margin:6px 0 2px;font-weight:700;break-after:avoid;page-break-after:avoid;border-left:3px solid #5c6bc0;background:#f4f5fb;color:#283593}'
+    + '.d0{font-size:13px;border-left-width:5px;background:#e8eaf6}.d1{font-size:12px}.d2{font-size:12px}.d3,.d4{font-size:11px;font-weight:600;color:#3f4a9e}'
+    + '.ct{font-weight:400;color:#7986cb;font-size:10px}.pb{break-before:page;page-break-before:always}'
+    + 'table{border-collapse:collapse;margin-bottom:4px;table-layout:fixed}table.t5 th:nth-child(1){width:20%}table.t5 th:nth-child(2){width:18%}table.t5 th:nth-child(3){width:18%}table.t5 th:nth-child(4){width:20%}table.t5 th:nth-child(5){width:24%}table.t6 th:nth-child(1){width:18%}table.t6 th:nth-child(2){width:16%}table.t6 th:nth-child(3){width:16%}table.t6 th:nth-child(4){width:18%}table.t6 th:nth-child(5){width:22%}table.t6 th:nth-child(6){width:10%}'
+    + 'th{text-align:left;font-size:9px;color:#5c6bc0;border-bottom:1px solid #c5cae9;padding:2px 6px;font-weight:700}'
+    + 'td{padding:2px 6px;border-bottom:0.5px solid #e5e7f0}tr{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}.n{font-weight:700;color:#303f9f}.j{color:#5c6bc0;font-weight:600}';
+  return '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>조직도_' + ds + '</title><style>' + css + '</style></head><body><h1>조직도</h1><div class="sub">' + sub + '</div>' + body + '</body></html>';
+}
+function orgPdf() {
+  const list = getOrgList();
+  if (!list.length) { alert('저장할 조직도 데이터가 없어요'); return; }
+  const old = document.getElementById('org-print-frame'); if (old) old.remove();
+  const f = document.createElement('iframe');
+  f.id = 'org-print-frame';
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { alert('인쇄 창을 열지 못했어요. 다시 시도해 주세요'); } };
+  document.body.appendChild(f);
+  f.srcdoc = buildOrgPrintHtml(list);
+  const t = document.createElement('div');
+  t.textContent = "인쇄 창이 열리면 '대상(프린터)'을 'PDF로 저장'으로 선택하세요";
+  t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#fff;color:#ad1457;border:1.5px solid #f48fb1;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.12)';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 5000);
 }
 </script>
 </body>
